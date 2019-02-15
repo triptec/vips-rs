@@ -11,7 +11,7 @@ categories = ["multimedia::images"]
 license = "MIT"
 
 [dependencies]
-vips-sys = "0.1.2"
+vips-sys = { path = "../vips-sys" }
 lazy_static = "1.0.0"
 
 [dev-dependencies]

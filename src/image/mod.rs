@@ -479,11 +479,11 @@ impl<'a> VipsImage<'a> {
     // ─── PROPERTIES ─────────────────────────────────────────────────────────────────
     //
 
-    fn width(&self) -> u32 {
+    pub fn width(&self) -> u32 {
         unsafe { (*self.c).Xsize as u32 }
     }
 
-    fn height(&self) -> u32 {
+    pub fn height(&self) -> u32 {
         unsafe { (*self.c).Ysize as u32 }
     }
 
@@ -560,11 +560,33 @@ impl<'a> VipsImage<'a> {
         }
     }
 
+    pub fn write_to_buffer<S: Into<Vec<u8>>>(&self, suffix: S) -> Result<(Vec<u8>), Box<Error>> {
+        //let mut memory std::ffi::c_void;
+        let mut buf: *mut u8 = null_mut();
+
+        let mut_ref: &mut *mut u8 = &mut buf;
+
+        let raw_ptr: *mut *mut u8 = mut_ref as *mut *mut _;
+
+        let void_cast: *mut *mut c_void = raw_ptr as *mut *mut c_void;
+
+        //let mut memory: Vec<u8> = Vec::new();
+        let mut result_size: usize = 0;
+
+        let suffix = CString::new(suffix)?;
+        let ret = unsafe { ffi::vips_image_write_to_buffer(self.c as *mut ffi::VipsImage, suffix.as_ptr(), void_cast, &mut result_size as *mut usize, null() as *const c_char) };
+        //dbg!(buf);
+        let slice = unsafe { ::std::slice::from_raw_parts_mut(&mut *buf, result_size) };
+        let boxed_slice: Box<[u8]> = unsafe { Box::from_raw(slice) };
+        let vec = boxed_slice.into_vec();
+        Ok(vec)
+    }
+
     //
     // ─── CONVERT ────────────────────────────────────────────────────────────────────
     //
 
-    fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         unsafe {
             let mut result_size: usize = 0;
             let memory: *mut u8 = ffi::vips_image_write_to_memory(self.c as *mut ffi::VipsImage, &mut result_size as *mut usize) as *mut u8;
