@@ -510,13 +510,16 @@ impl<'a> VipsImage<'a> {
 
     pub fn thumbnail(&self, width: u32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
-        let mut dpointer = &mut out_ptr;
+        let mut out_dptr = &mut out_ptr;
+        let mut in_ptr = self.c as *mut ffi::VipsImage;
         /*
         unsafe {
-            ffi::vips_black(dpointer, 5, 5, null() as *const c_char);
-            return result(*dpointer);
+            //ffi::vips_black(out_dptr, 5, 5, null() as *const c_char);
+            ffi::vips_thumbnail_image(in_ptr, out_dptr, 200, null() as *const c_char);
+            return result(*out_dptr);
         }
         */
+
 
         unsafe {
             //let out : *mut c_void = unsafe {std::mem::transmute(&out_ptr)};
@@ -524,27 +527,42 @@ impl<'a> VipsImage<'a> {
             //dbg!(out_ptr);
             //dbg!(out);
             //let mut n = CString::new("").unwrap();
-            let mut n = null() as *const c_char;
 
-            let mut w = width.clone() as i32;
             let mut va_arguments = vec![
-                &mut dpointer as *mut _ as *mut c_void,
-                &mut 4 as *mut _ as *mut c_void,
-                &mut 5 as *mut _ as *mut c_void,
-                &mut n as *mut _ as *mut c_void
+                &mut in_ptr as *mut _ as *mut c_void,
+                &mut out_dptr as *mut _ as *mut c_void,
+                &mut width.clone() as *mut _ as *mut c_void,
             ];
             let mut va_types: Vec<*mut ffi_type> = vec![&mut types::pointer,
-                                                        &mut types::sint64,
-                                                        &mut types::sint64,
                                                         &mut types::pointer,
+                                                        &mut types::sint64,
             ];
 
+            if options.height.is_some() {
+                va_types.push(&mut types::pointer);
+                //let attr_name = CString::new("height").unwrap();
+                let mut attr_name = "height\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
-            /*
+                va_types.push(&mut types::sint64);
+                let mut attr_value = options.height.unwrap();
+                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+            }
+
+            if options.size.is_some() {
+                va_types.push(&mut types::pointer);
+                //let attr_name = CString::new("height").unwrap();
+                let mut attr_name = "size\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::uint32);
+                let mut attr_value = options.size.unwrap() as u32;
+                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+            }
+
             va_types.push(&mut types::pointer);
-            let end = CString::new("").unwrap();
-            va_arguments.push(&mut end.as_ptr() as *mut _ as *mut c_void);
-            */
+            let mut end = null() as *const c_char;
+            va_arguments.push(&mut end as *mut _ as *mut c_void);
 
             let mut cif: ffi_cif = Default::default();
 
@@ -552,13 +570,13 @@ impl<'a> VipsImage<'a> {
                 &mut cif,
                 ffi_abi_FFI_DEFAULT_ABI,
                 3,
-                4,
+                va_types.len(),
                 &mut types::sint64,
                 va_types.as_mut_ptr(),
             ).unwrap();
             let res: i32 = call(
                 &mut cif,
-                CodePtr(ffi::vips_black as *mut _),
+                CodePtr(ffi::vips_thumbnail_image as *mut _),
                 va_arguments.as_mut_ptr(),
             );
             dbg!(res);
@@ -569,7 +587,7 @@ impl<'a> VipsImage<'a> {
 
             return VipsImage::new();
             */
-            return result(*dpointer)
+            return result(*out_dptr)
         };
         //result(out_ptr)
     }
