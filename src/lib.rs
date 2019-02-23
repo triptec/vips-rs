@@ -4,7 +4,7 @@
 extern crate vips_sys as ffi;
 #[macro_use]
 extern crate lazy_static;
-
+extern crate libffi;
 // re-exports modules
 mod common;
 pub use common::*;
@@ -14,6 +14,7 @@ pub use instance::VipsInstance;
 
 mod image;
 pub use image::VipsImage;
+pub use image::VipsThumbnailOptions;
 
 mod interpolate;
 pub use interpolate::VipsInterpolate;
@@ -75,7 +76,6 @@ pub use ffi::VipsIntent;
 pub use ffi::VipsPCS;
 pub use ffi::VipsCombineMode;
 pub use ffi::VipsBBits;
-
 
 pub use ffi::vips_call as call;
 

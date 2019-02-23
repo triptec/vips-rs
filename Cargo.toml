@@ -13,6 +13,7 @@ license = "MIT"
 [dependencies]
 vips-sys = { path = "../vips-sys" }
 lazy_static = "1.0.0"
+libffi = "0.6.3"
 
 [dev-dependencies]
 compiletest_rs = "0.3.11"
