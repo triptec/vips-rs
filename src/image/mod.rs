@@ -522,12 +522,6 @@ impl<'a> VipsImage<'a> {
 
 
         unsafe {
-            //let out : *mut c_void = unsafe {std::mem::transmute(&out_ptr)};
-            //let mut out = &mut out_ptr as *mut c_void;
-            //dbg!(out_ptr);
-            //dbg!(out);
-            //let mut n = CString::new("").unwrap();
-
             let mut va_arguments = vec![
                 &mut in_ptr as *mut _ as *mut c_void,
                 &mut out_dptr as *mut _ as *mut c_void,
@@ -540,7 +534,6 @@ impl<'a> VipsImage<'a> {
 
             if options.height.is_some() {
                 va_types.push(&mut types::pointer);
-                //let attr_name = CString::new("height").unwrap();
                 let mut attr_name = "height\0";
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
@@ -551,12 +544,73 @@ impl<'a> VipsImage<'a> {
 
             if options.size.is_some() {
                 va_types.push(&mut types::pointer);
-                //let attr_name = CString::new("height").unwrap();
                 let mut attr_name = "size\0";
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
-                va_types.push(&mut types::uint32);
-                let mut attr_value = options.size.unwrap() as u32;
+                va_types.push(&mut types::uint8);
+                let mut attr_value = options.size.unwrap() as u8;
+                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+            }
+
+            if options.auto_rotate.is_some() {
+                va_types.push(&mut types::pointer);
+                let mut attr_name = "auto_rotate\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::uint8);
+                let mut attr_value = options.auto_rotate.unwrap() as u8;
+                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+            }
+
+            if options.crop.is_some() {
+                va_types.push(&mut types::pointer);
+                let mut attr_name = "crop\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::uint8);
+                let mut attr_value = options.crop.unwrap() as u8;
+                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+            }
+
+            if options.linear.is_some() {
+                va_types.push(&mut types::pointer);
+                let mut attr_name = "linear\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::uint8);
+                let mut attr_value = options.linear.unwrap() as u8;
+                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+            }
+
+            if options.import_profile.is_some() {
+                va_types.push(&mut types::pointer);
+                let mut attr_name = "import_profile\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::pointer);
+
+                let mut attr_value = CString::new(options.import_profile.unwrap()).unwrap();
+                va_arguments.push(&mut attr_value.as_ptr() as *mut _ as *mut c_void);
+            }
+
+            if options.export_profile.is_some() {
+                va_types.push(&mut types::pointer);
+                let mut attr_name = "export_profile\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::pointer);
+
+                let mut attr_value = CString::new(options.export_profile.unwrap()).unwrap();
+                va_arguments.push(&mut attr_value.as_ptr() as *mut _ as *mut c_void);
+            }
+
+            if options.intent.is_some() {
+                va_types.push(&mut types::pointer);
+                let mut attr_name = "intent\0";
+                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+
+                va_types.push(&mut types::uint8);
+                let mut attr_value = options.size.unwrap() as u8;
                 va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
             }
 
@@ -579,17 +633,8 @@ impl<'a> VipsImage<'a> {
                 CodePtr(ffi::vips_thumbnail_image as *mut _),
                 va_arguments.as_mut_ptr(),
             );
-            dbg!(res);
-            /*
-            let name = CString::new("/tmp/lol.jpg").unwrap();
-            let r = ffi::vips_image_write_to_file(self.c, name.as_ptr());
-            dbg!(std::ffi::CStr::from_ptr(ffi::vips_error_buffer()));
-
-            return VipsImage::new();
-            */
             return result(*out_dptr)
         };
-        //result(out_ptr)
     }
 
 
