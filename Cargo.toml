@@ -18,5 +18,10 @@ libffi = "0.6.3"
 [dev-dependencies]
 compiletest_rs = "0.3.11"
 
+[dependencies.libffi-sys]
+version = "0.6.3"
+default-features = false
+
 [package.metadata.docs.rs]
 features = [ "docs" ]
+
