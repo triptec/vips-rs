@@ -508,10 +508,11 @@ impl<'a> VipsImage<'a> {
     //
 
 
-    pub fn thumbnail(&self, width: u32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
+    pub fn thumbnail(&self, width: i32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let mut out_dptr = &mut out_ptr;
         let mut in_ptr = self.c as *mut ffi::VipsImage;
+        let mut width1 = width.clone();
         /*
         unsafe {
             //ffi::vips_black(out_dptr, 5, 5, null() as *const c_char);
@@ -525,11 +526,11 @@ impl<'a> VipsImage<'a> {
             let mut va_arguments = vec![
                 &mut in_ptr as *mut _ as *mut c_void,
                 &mut out_dptr as *mut _ as *mut c_void,
-                &mut width.clone() as *mut _ as *mut c_void,
+                &mut width1 as *mut _ as *mut c_void,
             ];
             let mut va_types: Vec<*mut ffi_type> = vec![&mut types::pointer,
                                                         &mut types::pointer,
-                                                        &mut types::sint64,
+                                                        &mut types::sint32,
             ];
 
             if options.height.is_some() {
@@ -537,7 +538,7 @@ impl<'a> VipsImage<'a> {
                 let mut attr_name = "height\0";
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
-                va_types.push(&mut types::sint64);
+                va_types.push(&mut types::sint32);
                 let mut attr_value = options.height.unwrap();
                 va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
             }
@@ -547,8 +548,8 @@ impl<'a> VipsImage<'a> {
                 let mut attr_name = "size\0";
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
-                va_types.push(&mut types::uint8);
-                let mut attr_value = options.size.unwrap() as u8;
+                va_types.push(&mut types::uint32);
+                let mut attr_value = options.size.unwrap() as u32;
                 va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
             }
 
@@ -567,8 +568,8 @@ impl<'a> VipsImage<'a> {
                 let mut attr_name = "crop\0";
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
-                va_types.push(&mut types::uint8);
-                let mut attr_value = options.crop.unwrap() as u8;
+                va_types.push(&mut types::uint32);
+                let mut attr_value = options.crop.unwrap() as u32;
                 va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
             }
 
@@ -609,25 +610,29 @@ impl<'a> VipsImage<'a> {
                 let mut attr_name = "intent\0";
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
-                va_types.push(&mut types::uint8);
-                let mut attr_value = options.size.unwrap() as u8;
+                va_types.push(&mut types::uint32);
+                let mut attr_value = options.size.unwrap() as u32;
                 va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
             }
 
             va_types.push(&mut types::pointer);
             let mut end = null() as *const c_char;
             va_arguments.push(&mut end as *mut _ as *mut c_void);
+            //let mut end = CString::new("").unwrap();
+            //va_arguments.push(&mut end as *mut _ as *mut c_void);
 
             let mut cif: ffi_cif = Default::default();
-
+            dbg!("prep");
+            dbg!(&va_arguments);
             prep_cif_var(
                 &mut cif,
                 ffi_abi_FFI_DEFAULT_ABI,
                 3,
                 va_types.len(),
-                &mut types::sint64,
+                &mut types::sint32,
                 va_types.as_mut_ptr(),
             ).unwrap();
+            dbg!("call");
             let res: i32 = call(
                 &mut cif,
                 CodePtr(ffi::vips_thumbnail_image as *mut _),
