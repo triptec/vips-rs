@@ -512,7 +512,6 @@ impl<'a> VipsImage<'a> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let mut out_dptr = &mut out_ptr;
         let mut in_ptr = self.c as *mut ffi::VipsImage;
-        let mut width1 = width.clone();
         /*
         unsafe {
             //ffi::vips_black(out_dptr, 5, 5, null() as *const c_char);
@@ -526,31 +525,36 @@ impl<'a> VipsImage<'a> {
             let mut va_arguments = vec![
                 &mut in_ptr as *mut _ as *mut c_void,
                 &mut out_dptr as *mut _ as *mut c_void,
-                &mut width1 as *mut _ as *mut c_void,
+                &width as *const _ as *mut c_void,
             ];
             let mut va_types: Vec<*mut ffi_type> = vec![&mut types::pointer,
                                                         &mut types::pointer,
                                                         &mut types::sint32,
             ];
 
+            let height_attr = "height\0";
+            let height_attr_ptr_void = &height_attr.as_ptr() as *const _ as *mut c_void;
+
             if options.height.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "height\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(height_attr_ptr_void);
 
                 va_types.push(&mut types::sint32);
-                let mut attr_value = options.height.unwrap();
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+                if let Some(ref v) = options.height {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
             }
 
+            let size_attr = "size\0";
+            let size_attr_ptr_void = &size_attr.as_ptr() as *const _ as *mut c_void;
             if options.size.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "size\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(size_attr_ptr_void);
 
                 va_types.push(&mut types::uint32);
-                let mut attr_value = options.size.unwrap() as u32;
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+                if let Some(ref v) = options.size {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
             }
 
             if options.auto_rotate.is_some() {
@@ -616,10 +620,11 @@ impl<'a> VipsImage<'a> {
             }
 
             va_types.push(&mut types::pointer);
-            let mut end = null() as *const c_char;
-            va_arguments.push(&mut end as *mut _ as *mut c_void);
-            //let mut end = CString::new("").unwrap();
-            //va_arguments.push(&mut end as *mut _ as *mut c_void);
+            //va_arguments.push("\0" as *const _ as *mut c_void);
+            let end = null() as *const c_char;
+            va_arguments.push(&end as *const _ as *mut c_void);
+            //let end = CString::new("").unwrap();
+            //va_arguments.push(&end as *const _ as *mut c_void);
 
             let mut cif: ffi_cif = Default::default();
             dbg!("prep");
