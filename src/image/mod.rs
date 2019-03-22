@@ -1,5 +1,5 @@
 use ffi;
-use ffi::{VipsSize, VipsKernel, VipsBandFormat, VipsCombineMode, VipsDirection, VipsInteresting, VipsIntent};
+use ffi::{VipsSize, VipsKernel, VipsBandFormat, VipsCombineMode, VipsDirection, VipsInteresting, VipsIntent, VipsExtend, VipsArrayDouble};
 use std::error::Error;
 use std::os::raw::c_char;
 use std::ptr::null;
@@ -23,6 +23,12 @@ pub struct VipsThumbnailOptions {
     pub import_profile: Option<String>,
     pub export_profile: Option<String>,
     pub intent: Option<VipsIntent>,
+}
+
+#[derive(Default)]
+pub struct VipsEmbedOptions {
+    pub extend: Option<VipsExtend>,
+    pub background: Option<VipsArrayDouble>,
 }
 
 impl VipsThumbnailOptions {
@@ -509,6 +515,65 @@ impl<'a> VipsImage<'a> {
     //
 
 
+    pub fn embed(&self, x: u32, y: u32, width: u32, height: u32, options: VipsEmbedOptions) -> Result<VipsImage<'a>, Box<Error>> {
+        let mut out_ptr: *mut ffi::VipsImage = null_mut();
+        let mut out_dptr = &mut out_ptr;
+        let mut in_ptr = self.c as *mut ffi::VipsImage;
+        unsafe {
+            let mut va_arguments = vec![
+                &mut in_ptr as *mut _ as *mut c_void,
+                &mut out_dptr as *mut _ as *mut c_void,
+                &x as *const _ as *mut c_void,
+                &y as *const _ as *mut c_void,
+                &width as *const _ as *mut c_void,
+                &height as *const _ as *mut c_void,
+            ];
+            let mut va_types: Vec<*mut ffi_type> = vec![&mut types::pointer,
+                                                        &mut types::pointer,
+                                                        &mut types::sint32,
+                                                        &mut types::sint32,
+                                                        &mut types::sint32,
+                                                        &mut types::sint32,
+            ];
+
+            let extend_attr = "extend\0";
+            let extend_attr_ptr_void = &extend_attr.as_ptr() as *const _ as *mut c_void;
+
+            if options.extend.is_some() {
+                va_types.push(&mut types::pointer);
+                va_arguments.push(extend_attr_ptr_void);
+
+                va_types.push(&mut types::uint32);
+                if let Some(ref v) = options.extend {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
+            }
+
+            va_types.push(&mut types::pointer);
+            //va_arguments.push("\0" as *const _ as *mut c_void);
+            let end = null() as *const c_char;
+            va_arguments.push(&end as *const _ as *mut c_void);
+            //let end = CString::new("").unwrap();
+            //va_arguments.push(&end as *const _ as *mut c_void);
+
+            let mut cif: ffi_cif = Default::default();
+            prep_cif_var(
+                &mut cif,
+                ffi_abi_FFI_DEFAULT_ABI,
+                3,
+                va_types.len(),
+                &mut types::sint32,
+                va_types.as_mut_ptr(),
+            ).unwrap();
+            let res: i32 = call(
+                &mut cif,
+                CodePtr(ffi::vips_embed as *mut _),
+                va_arguments.as_mut_ptr(),
+            );
+            return result(*out_dptr)
+        }
+    }
+
     pub fn thumbnail(&self, width: u32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let mut out_dptr = &mut out_ptr;
@@ -621,15 +686,10 @@ impl<'a> VipsImage<'a> {
             }
 
             va_types.push(&mut types::pointer);
-            //va_arguments.push("\0" as *const _ as *mut c_void);
             let end = null() as *const c_char;
             va_arguments.push(&end as *const _ as *mut c_void);
-            //let end = CString::new("").unwrap();
-            //va_arguments.push(&end as *const _ as *mut c_void);
 
             let mut cif: ffi_cif = Default::default();
-            dbg!("prep");
-            dbg!(&va_arguments);
             prep_cif_var(
                 &mut cif,
                 ffi_abi_FFI_DEFAULT_ABI,
@@ -638,7 +698,6 @@ impl<'a> VipsImage<'a> {
                 &mut types::sint32,
                 va_types.as_mut_ptr(),
             ).unwrap();
-            dbg!("call");
             let res: i32 = call(
                 &mut cif,
                 CodePtr(ffi::vips_thumbnail_image as *mut _),
@@ -649,84 +708,6 @@ impl<'a> VipsImage<'a> {
     }
 
 
-    pub fn thumbnail1(&self, width: u32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
-        let mut out_ptr: *mut ffi::VipsImage = null_mut();
-
-        /*
-        if options.height.is_none() && options.size.is_none() && options.auto_rotate.is_none() && options.crop.is_none() && options.linear.is_none() && options.import_profile.is_none() && options.export_profile.is_none() && options.intent.is_none() { unsafe { ffi::vips_thumbnail_image(self.c as *mut ffi::VipsImage, &mut out_ptr, width as i32); }; };
-        if options.height.is_some() && options.size.is_none() && options.auto_rotate.is_none() && options.crop.is_none() && options.linear.is_none() && options.import_profile.is_none() && options.export_profile.is_none() && options.intent.is_none() { unsafe { ffi::vips_thumbnail_image(self.c as *mut ffi::VipsImage, &mut out_ptr, width as i32, "height\0".as_ptr(), options.height.unwrap() as i32, null() as *const c_char); }; };
-        if options.height.is_some() && options.size.is_some() && options.auto_rotate.is_none() && options.crop.is_none() && options.linear.is_none() && options.import_profile.is_none() && options.export_profile.is_none() && options.intent.is_none() { unsafe { ffi::vips_thumbnail_image(self.c as *mut ffi::VipsImage, &mut out_ptr, width as i32, "height\0".as_ptr(), /*options.height.unwrap()*/ null() as *const i32, "size\0".as_ptr(), options.size.unwrap(), null() as *const c_char); }; };
-        */
-        //if options.height.is_some() && options.size.is_some() && options.auto_rotate.is_none() && options.crop.is_none() && options.linear.is_none() && options.import_profile.is_none() && options.export_profile.is_none() && options.intent.is_none() { unsafe { ffi::vips_thumbnail_image(self.c as *mut ffi::VipsImage, &mut out_ptr, width as i32, "height\0".as_ptr(), options.height.unwrap() as i32, "size\0".as_ptr(), options.size.unwrap(), null() as *const c_char); }; };
-
-        unsafe {
-            /*
-            let mut height = null() as i32;
-            let mut size = null() as i32;
-            if options.height.is_some() {
-                height = options.height.unwrap();
-            }
-            if options.size.is_some() {
-                size = options.size.unwrap() as i32;
-            }
-            */
-            /*
-            ffi::vips_thumbnail_image(
-                self.c as *mut ffi::VipsImage,
-                &mut out_ptr,
-                width as i32,
-                "height\0".as_ptr(),
-                options.height.unwrap(),
-                "size\0".as_ptr(),
-                options.size.unwrap(),
-                null() as *const c_char
-            );
-            */
-            let mut img = self.c as *mut ffi::VipsImage as *mut c_void;
-            let mut w = width.clone() as i32;
-            let mut va_arguments = vec![
-                img,
-                out_ptr as *mut c_void,
-                &mut w as *mut _ as *mut c_void
-            ];
-            let mut va_types: Vec<*mut ffi_type> = vec![&mut types::pointer,
-                                                        &mut types::pointer,
-                                                        &mut types::sint64
-            ];
-
-            if options.height.is_some() {
-                let attr_name = CString::new("height").unwrap();
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
-                let mut attr_value = options.height.unwrap();
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
-                va_types.push(&mut types::sint64);
-            }
-
-
-            va_types.push(&mut types::pointer);
-            let end = CString::new("").unwrap();
-            va_arguments.push(&mut end.as_ptr() as *mut _ as *mut c_void);
-
-
-            let mut cif: ffi_cif = Default::default();
-
-            prep_cif_var(
-                &mut cif,
-                ffi_abi_FFI_DEFAULT_ABI,
-                3,
-                va_types.len(),
-                &mut types::sint64,
-                va_types.as_mut_ptr(),
-            ).unwrap();
-            let res: i32 = call(
-                &mut cif,
-                CodePtr(ffi::vips_thumbnail_image as *mut _),
-                va_arguments.as_mut_ptr(),
-            );
-
-            return result(out_ptr);
-        }
-    }
     // default: block shrink + lanczos3
     fn resize(&self, scale: f64, vscale: Option<f64>, kernel: Option<VipsKernel>) -> Result<VipsImage, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();

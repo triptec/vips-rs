@@ -15,6 +15,7 @@ pub use instance::VipsInstance;
 mod image;
 pub use image::VipsImage;
 pub use image::VipsThumbnailOptions;
+pub use image::VipsEmbedOptions;
 
 mod interpolate;
 pub use interpolate::VipsInterpolate;
