@@ -13,8 +13,9 @@ use ::VipsInterpolate;
 
 use libffi::low::{types, ffi_type, ffi_cif, prep_cif_var, ffi_abi_FFI_DEFAULT_ABI, call, CodePtr};
 
+#[derive(Default)]
 pub struct VipsThumbnailOptions {
-    pub height: Option<i32>,
+    pub height: Option<u32>,
     pub size: Option<VipsSize>,
     pub auto_rotate: Option<bool>,
     pub crop: Option<VipsInteresting>,
@@ -508,7 +509,7 @@ impl<'a> VipsImage<'a> {
     //
 
 
-    pub fn thumbnail(&self, width: i32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
+    pub fn thumbnail(&self, width: u32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let mut out_dptr = &mut out_ptr;
         let mut in_ptr = self.c as *mut ffi::VipsImage;
