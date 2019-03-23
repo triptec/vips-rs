@@ -514,6 +514,52 @@ impl<'a> VipsImage<'a> {
     // ─── RESIZE ─────────────────────────────────────────────────────────────────────
     //
 
+    pub fn extract_area(&self, x: u32, y: u32, width: u32, height: u32) -> Result<VipsImage<'a>, Box<Error>> {
+        let mut out_ptr: *mut ffi::VipsImage = null_mut();
+        let mut out_dptr = &mut out_ptr;
+        let mut in_ptr = self.c as *mut ffi::VipsImage;
+        unsafe {
+            let mut va_arguments = vec![
+                &mut in_ptr as *mut _ as *mut c_void,
+                &mut out_dptr as *mut _ as *mut c_void,
+                &x as *const _ as *mut c_void,
+                &y as *const _ as *mut c_void,
+                &width as *const _ as *mut c_void,
+                &height as *const _ as *mut c_void,
+            ];
+            let mut va_types: Vec<*mut ffi_type> = vec![&mut types::pointer,
+                                                        &mut types::pointer,
+                                                        &mut types::sint32,
+                                                        &mut types::sint32,
+                                                        &mut types::sint32,
+                                                        &mut types::sint32,
+            ];
+
+            va_types.push(&mut types::pointer);
+            //va_arguments.push("\0" as *const _ as *mut c_void);
+            let end = null() as *const c_char;
+            va_arguments.push(&end as *const _ as *mut c_void);
+            //let end = CString::new("").unwrap();
+            //va_arguments.push(&end as *const _ as *mut c_void);
+
+            let mut cif: ffi_cif = Default::default();
+            prep_cif_var(
+                &mut cif,
+                ffi_abi_FFI_DEFAULT_ABI,
+                3,
+                va_types.len(),
+                &mut types::sint32,
+                va_types.as_mut_ptr(),
+            ).unwrap();
+            let res: i32 = call(
+                &mut cif,
+                CodePtr(ffi::vips_extract_area as *mut _),
+                va_arguments.as_mut_ptr(),
+            );
+            return result(*out_dptr)
+        }
+    }
+
 
     pub fn embed(&self, x: u32, y: u32, width: u32, height: u32, options: VipsEmbedOptions) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
