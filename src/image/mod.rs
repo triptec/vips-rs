@@ -753,9 +753,8 @@ impl<'a> VipsImage<'a> {
         };
     }
 
-
     // default: block shrink + lanczos3
-    fn resize(&self, scale: f64, vscale: Option<f64>, kernel: Option<VipsKernel>) -> Result<VipsImage, Box<Error>> {
+    pub fn resize(&self, scale: f64, vscale: Option<f64>, kernel: Option<VipsKernel>) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let ret = unsafe {
             ffi::vips_resize(
@@ -771,6 +770,7 @@ impl<'a> VipsImage<'a> {
         };
         result_with_ret(out_ptr, ret)
     }
+
     fn resize_to_size(&self, width: u32, height: Option<u32>, kernel: Option<VipsKernel>) -> Result<VipsImage, Box<Error>> {
         self.resize(
             width as f64 / self.width() as f64,
