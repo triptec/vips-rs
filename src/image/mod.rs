@@ -727,7 +727,7 @@ impl<'a> VipsImage<'a> {
                 va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
 
                 va_types.push(&mut types::uint32);
-                let mut attr_value = options.size.unwrap() as u32;
+                let mut attr_value = options.intent.unwrap() as u32;
                 va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
             }
 
