@@ -556,7 +556,7 @@ impl<'a> VipsImage<'a> {
                 CodePtr(ffi::vips_extract_area as *mut _),
                 va_arguments.as_mut_ptr(),
             );
-            return result(*out_dptr)
+            return result(*out_dptr);
         }
     }
 
@@ -616,7 +616,7 @@ impl<'a> VipsImage<'a> {
                 CodePtr(ffi::vips_embed as *mut _),
                 va_arguments.as_mut_ptr(),
             );
-            return result(*out_dptr)
+            return result(*out_dptr);
         }
     }
 
@@ -749,8 +749,52 @@ impl<'a> VipsImage<'a> {
                 CodePtr(ffi::vips_thumbnail_image as *mut _),
                 va_arguments.as_mut_ptr(),
             );
-            return result(*out_dptr)
+            return result(*out_dptr);
         };
+    }
+
+    pub fn smartcrop(&self, width: u32, height: u32, interesting: VipsInteresting) -> Result<VipsImage<'a>, Box<Error>> {
+        let mut out_ptr: *mut ffi::VipsImage = null_mut();
+        let ret = unsafe {
+            ffi::vips_smartcrop(
+                self.c as *mut ffi::VipsImage,
+                &mut out_ptr,
+                width as i32,
+                height as i32,
+                "interesting\0".as_ptr(),
+                interesting,
+                null() as *const c_char,
+            )
+        };
+        result(out_ptr)
+    }
+
+    pub fn hist_find(&self) -> Result<VipsImage<'a>, Box<Error>> {
+        let mut out_ptr: *mut ffi::VipsImage = null_mut();
+        let ret = unsafe {
+            ffi::vips_hist_find(
+                self.c as *mut ffi::VipsImage,
+                &mut out_ptr,
+                null() as *const c_char,
+            )
+        };
+        result(out_ptr)
+    }
+
+    pub fn hist_entropy(&self) -> Result<f64, Box<Error>> {
+        let mut out: f64 = 0.0;
+        let ret = unsafe {
+            ffi::vips_hist_entropy(
+                self.c as *mut ffi::VipsImage,
+                &mut out,
+                null() as *const c_char,
+            )
+        };
+        if ret == 0 {
+            Ok(out)
+        } else {
+            Err(current_error().into())
+        }
     }
 
     // default: block shrink + lanczos3
