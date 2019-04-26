@@ -76,7 +76,6 @@ pub use ffi::VipsSize;
 pub use ffi::VipsIntent;
 pub use ffi::VipsPCS;
 pub use ffi::VipsCombineMode;
-pub use ffi::VipsBBits;
 
 pub use ffi::vips_call as call;
 

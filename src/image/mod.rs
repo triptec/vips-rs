@@ -881,6 +881,125 @@ impl<'a> VipsImage<'a> {
         Ok(vec)
     }
 
+    pub fn magicksave_buffer<S: Into<Vec<u8>>>(&self, q: u32, format: S) -> Result<(Vec<u8>), Box<Error>> {
+        //let mut memory std::ffi::c_void;
+        let mut buf: *mut u8 = null_mut();
+
+        let mut_ref: &mut *mut u8 = &mut buf;
+
+        let raw_ptr: *mut *mut u8 = mut_ref as *mut *mut _;
+
+        let void_cast: *mut *mut c_void = raw_ptr as *mut *mut c_void;
+
+        //let mut memory: Vec<u8> = Vec::new();
+        let mut result_size: usize = 0;
+
+        let format = CString::new(format)?;
+        let ret = unsafe {
+            ffi::vips_magicksave_buffer(
+                self.c as *mut ffi::VipsImage,
+                void_cast,
+                &mut result_size as *mut usize,
+                "quality\0".as_ptr(),
+                q,
+                "format\0".as_ptr(),
+                format.as_ptr(),
+                null() as *const c_char
+            )
+        };
+        let slice = unsafe { ::std::slice::from_raw_parts_mut(&mut *buf, result_size) };
+        let boxed_slice: Box<[u8]> = unsafe { Box::from_raw(slice) };
+        let vec = boxed_slice.into_vec();
+        Ok(vec)
+    }
+
+    pub fn jpegsave_buffer(&self, q: u32) -> Result<(Vec<u8>), Box<Error>> {
+        //let mut memory std::ffi::c_void;
+        let mut buf: *mut u8 = null_mut();
+
+        let mut_ref: &mut *mut u8 = &mut buf;
+
+        let raw_ptr: *mut *mut u8 = mut_ref as *mut *mut _;
+
+        let void_cast: *mut *mut c_void = raw_ptr as *mut *mut c_void;
+
+        //let mut memory: Vec<u8> = Vec::new();
+        let mut result_size: usize = 0;
+
+        let ret = unsafe {
+            ffi::vips_jpegsave_buffer(
+                self.c as *mut ffi::VipsImage,
+                void_cast,
+                &mut result_size as *mut usize,
+                "Q\0".as_ptr(),
+                q,
+                null() as *const c_char
+            )
+        };
+        let slice = unsafe { ::std::slice::from_raw_parts_mut(&mut *buf, result_size) };
+        let boxed_slice: Box<[u8]> = unsafe { Box::from_raw(slice) };
+        let vec = boxed_slice.into_vec();
+        Ok(vec)
+    }
+
+    pub fn webpsave_buffer(&self, q: u32, lossless: bool) -> Result<(Vec<u8>), Box<Error>> {
+        //let mut memory std::ffi::c_void;
+        let mut buf: *mut u8 = null_mut();
+
+        let mut_ref: &mut *mut u8 = &mut buf;
+
+        let raw_ptr: *mut *mut u8 = mut_ref as *mut *mut _;
+
+        let void_cast: *mut *mut c_void = raw_ptr as *mut *mut c_void;
+
+        //let mut memory: Vec<u8> = Vec::new();
+        let mut result_size: usize = 0;
+
+        let ret = unsafe {
+            ffi::vips_webpsave_buffer(
+                self.c as *mut ffi::VipsImage,
+                void_cast,
+                &mut result_size as *mut usize,
+                "Q\0".as_ptr(),
+                q,
+                "lossless\0".as_ptr(),
+                lossless as c_int,
+                null() as *const c_char
+            )
+        };
+        let slice = unsafe { ::std::slice::from_raw_parts_mut(&mut *buf, result_size) };
+        let boxed_slice: Box<[u8]> = unsafe { Box::from_raw(slice) };
+        let vec = boxed_slice.into_vec();
+        Ok(vec)
+    }
+
+    pub fn pngsave_buffer(&self) -> Result<(Vec<u8>), Box<Error>> {
+        //let mut memory std::ffi::c_void;
+        let mut buf: *mut u8 = null_mut();
+
+        let mut_ref: &mut *mut u8 = &mut buf;
+
+        let raw_ptr: *mut *mut u8 = mut_ref as *mut *mut _;
+
+        let void_cast: *mut *mut c_void = raw_ptr as *mut *mut c_void;
+
+        //let mut memory: Vec<u8> = Vec::new();
+        let mut result_size: usize = 0;
+
+        let ret = unsafe {
+            ffi::vips_pngsave_buffer(
+                self.c as *mut ffi::VipsImage,
+                void_cast,
+                &mut result_size as *mut usize,
+                null() as *const c_char
+            )
+        };
+        let slice = unsafe { ::std::slice::from_raw_parts_mut(&mut *buf, result_size) };
+        let boxed_slice: Box<[u8]> = unsafe { Box::from_raw(slice) };
+        let vec = boxed_slice.into_vec();
+        Ok(vec)
+    }
+
     //
     // ─── CONVERT ────────────────────────────────────────────────────────────────────
     //
