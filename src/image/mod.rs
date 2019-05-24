@@ -753,6 +753,18 @@ impl<'a> VipsImage<'a> {
         };
     }
 
+    pub fn copy(&self) -> Result<VipsImage<'a>, Box<Error>> {
+        let mut out_ptr: *mut ffi::VipsImage = null_mut();
+        let ret = unsafe {
+            ffi::vips_copy(
+                self.c as *mut ffi::VipsImage,
+                &mut out_ptr,
+                null() as *const c_char,
+            )
+        };
+        result(out_ptr)
+    }
+
     pub fn smartcrop(&self, width: u32, height: u32, interesting: VipsInteresting) -> Result<VipsImage<'a>, Box<Error>> {
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let ret = unsafe {
