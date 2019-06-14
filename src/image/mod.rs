@@ -13,7 +13,7 @@ use ::VipsInterpolate;
 
 use libffi::low::{types, ffi_type, ffi_cif, prep_cif_var, ffi_abi_FFI_DEFAULT_ABI, call, CodePtr};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct VipsThumbnailOptions {
     pub height: Option<u32>,
     pub size: Option<VipsSize>,
@@ -621,6 +621,7 @@ impl<'a> VipsImage<'a> {
     }
 
     pub fn thumbnail(&self, width: u32, options: VipsThumbnailOptions) -> Result<VipsImage<'a>, Box<Error>> {
+        dbg!(&options);
         let mut out_ptr: *mut ffi::VipsImage = null_mut();
         let mut out_dptr = &mut out_ptr;
         let mut in_ptr = self.c as *mut ffi::VipsImage;
@@ -669,66 +670,85 @@ impl<'a> VipsImage<'a> {
                 }
             }
 
+            let auto_rotate_attr = "auto_rotate\0";
+            let auto_rotate_attr_ptr_void = &auto_rotate_attr.as_ptr() as *const _ as *mut c_void;
             if options.auto_rotate.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "auto_rotate\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(auto_rotate_attr_ptr_void);
 
                 va_types.push(&mut types::uint8);
-                let mut attr_value = options.auto_rotate.unwrap() as u8;
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+                if let Some(ref v) = options.auto_rotate {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
             }
 
+            let crop_attr = "crop\0";
+            let crop_attr_ptr_void = &crop_attr.as_ptr() as *const _ as *mut c_void;
             if options.crop.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "crop\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(crop_attr_ptr_void);
 
                 va_types.push(&mut types::uint32);
-                let mut attr_value = options.crop.unwrap() as u32;
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+                if let Some(ref v) = options.crop {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
             }
 
+            let linear_attr = "linear\0";
+            let linear_attr_ptr_void = &linear_attr.as_ptr() as *const _ as *mut c_void;
             if options.linear.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "linear\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(linear_attr_ptr_void);
 
                 va_types.push(&mut types::uint8);
-                let mut attr_value = options.linear.unwrap() as u8;
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+                if let Some(ref v) = options.linear {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
             }
 
-            if options.import_profile.is_some() {
+
+            // Written not tested
+            let import_profile_attr = "import_profile\0";
+            let import_profile_attr_ptr_void = &import_profile_attr.as_ptr() as *const _ as *mut c_void;
+            let import_profile_value = match options.import_profile {
+                Some(v) => Some(CString::new(v).unwrap()),
+                None => None
+            };
+            if import_profile_value.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "import_profile\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(import_profile_attr_ptr_void);
 
                 va_types.push(&mut types::pointer);
 
-                let mut attr_value = CString::new(options.import_profile.unwrap()).unwrap();
-                va_arguments.push(&mut attr_value.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(&mut import_profile_value.unwrap().as_ptr() as *mut _ as *mut c_void);
             }
 
-            if options.export_profile.is_some() {
+            // Written not tested
+            let export_profile_attr = "export_profile\0";
+            let export_profile_attr_ptr_void = &export_profile_attr.as_ptr() as *const _ as *mut c_void;
+            let export_profile_value = match options.export_profile {
+                Some(v) => Some(CString::new(v).unwrap()),
+                None => None
+            };
+            if export_profile_value.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "export_profile\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(export_profile_attr_ptr_void);
 
                 va_types.push(&mut types::pointer);
 
-                let mut attr_value = CString::new(options.export_profile.unwrap()).unwrap();
-                va_arguments.push(&mut attr_value.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(&mut export_profile_value.unwrap().as_ptr() as *mut _ as *mut c_void);
             }
 
+            let intent_attr = "intent\0";
+            let intent_attr_ptr_void = &intent_attr.as_ptr() as *const _ as *mut c_void;
             if options.intent.is_some() {
                 va_types.push(&mut types::pointer);
-                let mut attr_name = "intent\0";
-                va_arguments.push(&mut attr_name.as_ptr() as *mut _ as *mut c_void);
+                va_arguments.push(intent_attr_ptr_void);
 
                 va_types.push(&mut types::uint32);
-                let mut attr_value = options.intent.unwrap() as u32;
-                va_arguments.push(&mut attr_value as *mut _ as *mut c_void);
+                if let Some(ref v) = options.intent {
+                    va_arguments.push(v as *const _ as *mut c_void);
+                }
             }
 
             va_types.push(&mut types::pointer);
