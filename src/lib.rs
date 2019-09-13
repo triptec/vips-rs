@@ -79,6 +79,10 @@ pub use ffi::VipsCombineMode;
 
 pub use ffi::vips_call as call;
 
+pub fn version(flag: i32) -> i32 {
+    unsafe { ffi::vips_version(flag)}
+}
+
 extern "C" {
     pub fn vips_call(operation_name: *const ::std::os::raw::c_char, ...) -> ::std::os::raw::c_int;
 }
